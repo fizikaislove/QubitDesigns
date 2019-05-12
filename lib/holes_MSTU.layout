@@ -1,0 +1,125 @@
+// Draws a layer of square holes which is within 10 um inside the ground polygon..
+
+     int hole_size = 45e3;
+     int hole_period = 47e3;
+     // int hole_size = 1e4;
+     // int hole_period = 1.1e4;
+
+
+     int border_thickness = 500e3;
+     int structure_borders = 20e3;
+
+void addHoles(cell* curCell) {
+
+    curCell->addBox(-chip_width/2+border_thickness,
+                    -chip_height/2+border_thickness,
+                    chip_width-2*border_thickness,
+                    chip_height-2*border_thickness,
+                    aux);
+
+	layout->booleanTool->boolOnLayer(0, 30, 30, "A+B", 0, 0, 0); //aux2 is mask
+    layout->booleanTool->boolOnLayer(ground, protect, aux2, "A-B", 0, 0, 0); //aux2 is mask
+    curCell->deselectAll();
+    curCell->selectLayer(aux2);
+    layout->drawing->currentCell->sizeAdjustSelect(-structure_borders,0);
+    curCell->deselectAll();
+
+
+    layout->booleanTool->boolOnLayer(aux, aux2, aux3, "A*B", 0, 0, 0);
+
+    int N_stripes_vertical = (chip_width-2*border_thickness)/hole_period+1;
+    int N_stripes_horizontal = (chip_height-2*border_thickness)/hole_period+1;
+
+    for (int i = -N_stripes_horizontal/2; i<=N_stripes_horizontal/2; i++) {
+      point start = newPoint(-chip_width/2+border_thickness,
+                              i * hole_period);
+      wire(curCell, aux4, start, "r",
+            chip_width-2*border_thickness, hole_period-hole_size);
+    }
+
+    for (int i = -N_stripes_vertical/2; i<=N_stripes_vertical/2; i++) {
+      point start = newPoint(i * hole_period,
+                              -chip_height/2+border_thickness);
+      wire(curCell, aux5, start, "u", chip_height-2*border_thickness, hole_period-hole_size);
+    }
+
+    // curCell->selectLayer(aux4);
+    layerTranslator t;
+    //layout->getText("Sample name1","Please enter the sample name:", "Xmon NbAl FB ?");
+    // layout->drawing->invertSelect();
+    // curCell->deselectAll();
+    layout->booleanTool->boolOnLayer(protect, protect, 20, "A+B", 0, 0, 0); //to find holes
+    layout->booleanTool->boolOnLayer(protect, protect, 21, "A+B", 0, 0, 0); //to find holes
+
+    layout->booleanTool->boolOnLayer(aux3, aux3, protect, "A+B", 0, 0, 0);
+    layout->booleanTool->boolOnLayer(aux3, aux4, 14, "A*B", 0, 0, 0);
+    layout->booleanTool->boolOnLayer(aux3, aux5, 15, "A*B", 0, 0, 0);
+    layout->booleanTool->boolOnLayer(14, 15, 16, "A-B", 0, 0, 0);
+    layout->booleanTool->boolOnLayer(15, 14, 17, "A-B", 0, 0, 0);
+    layout->booleanTool->boolOnLayer(14, 15, 18, "A*B", 0, 0, 0);
+	layout->booleanTool->boolOnLayer(17, 18, 17, "A+B", 0, 0, 0);
+	 
+
+    layout->booleanTool->boolOnLayer(14, 15, 19, "A+B", 0, 0, 0); //to find holes
+    layout->booleanTool->boolOnLayer(14, 15, 19, "A+B", 0, 0, 0);//to find holes
+    for(int i=0;i<=6;i++){
+    curCell->deselectAll();
+    curCell->selectLayer(20);
+    layout->drawing->currentCell->sizeAdjustSelect(10e3,0);
+    curCell->deselectAll();
+    }
+    curCell->deselectAll();
+    curCell->selectLayer(21);
+    layout->drawing->currentCell->sizeAdjustSelect(structure_borders,0);
+    curCell->deselectAll();
+
+
+    layout->booleanTool->boolOnLayer(20, 19, 22, "A-B", 0, 0, 1);//to find holes
+    // layout->booleanTool->boolOnLayer(21, ground, 22, "A*B", 0, 0, 0);
+    layout->booleanTool->boolOnLayer(22, 21, 23, "A-B", 0, 0, 1);//to find holes
+	layout->booleanTool->boolOnLayer(23, aux4, 23, "A-B", 0, 0, 1);
+	layout->booleanTool->boolOnLayer(23, aux5, 23, "A-B", 0, 0, 1);
+    //layout->getText("Sample name2","Please enter the sample name:", "Xmon NbAl FB ?");
+    // layout->drcTool->minimumDimensionOnLayer(5e3,5e3,23,false);
+   /* layout->drcTool->minimumSize(4e3, 23, false,false);
+    for(int i=0;i<=1;i++){
+    curCell->deselectAll();
+    curCell->selectLayer(21);
+    layout->drawing->currentCell->sizeAdjustSelect(10e3,0);
+    curCell->deselectAll();
+    }
+
+    layout->booleanTool->boolOnLayer(21, 0, 24, "A*B", 0, 0, 1);//to find holes
+    layout->booleanTool->boolOnLayer(0, 0, 0, "A-B", 0, 0, 0);
+	layout->booleanTool->boolOnLayer(0, 30, 0, "A+B", 0, 0, 0);*/
+	/*layout->drawing->deselectAll();
+	curCell->selectLayer(24);
+	layout->booleanTool->setA();
+	layout->drawing->deselectAll();
+	curCell->selectLayer(aux4);
+	layout->booleanTool->setB();
+	layout->booleanTool->aMinusBDel();*/
+	
+   /* layout->booleanTool->boolOnLayer(aux4, 24, 25, "A*B", 0, 0, 0);
+    layout->booleanTool->boolOnLayer(aux5, 24, 25, "A*B", 0, 0, 0);
+    layout->booleanTool->boolOnLayer(24, 25, 24, "A-B", 0, 0, 0);*/
+	string curCellName = curCell->cellName;
+    layout->drawing->setCell(curCellName+":Minimum Dimension 23");
+    //layout->drawing->deleteCurrentCell();
+    layout->drawing->setCell(curCellName);
+	
+    clearLayer(curCell, aux);
+    clearLayer(curCell, 14);
+    clearLayer(curCell, 15);
+    clearLayer(curCell, 19);
+    clearLayer(curCell, 20);
+    clearLayer(curCell, 21);
+    clearLayer(curCell, 22);
+    clearLayer(curCell, 23);
+    clearLayer(curCell, 30);
+    clearLayer(curCell, aux2);
+    clearLayer(curCell, aux3);
+    clearLayer(curCell, aux4);
+    //clearAllAuxiliaryAux(curCell);
+
+}

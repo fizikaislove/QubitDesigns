@@ -1,0 +1,208 @@
+/*
+
+    XMon qubit. Anchor point is on the protect of the arm towards the resonator.
+
+*/
+
+//corr = 30 -  correction for MSTU JJ
+point addXmon(cell* curCell, point anchorPoint, string direction, doubleList arm_lens, int distance, int w_JJ, int h_JJ, int corr = 30, double asymmetry=0,bool JJ=0) {
+ //the size of the hole at the bottom of the structure for the squid of JJ
+  int structure_length = 8e3;// only even numbers are available for symmetrical view
+  int squid_width_bottom = 4e3;
+  
+   double arm_len_x = arm_lens.at(0);
+   double arm_len_y = arm_lens.at(1);
+   point cursor;
+
+	
+	
+//add vertical strip
+    cursor.set(anchorPoint.x(), anchorPoint.y()-g_q);
+    wire(curCell, aux3, anchorPoint, "d", arm_len_y+2*g_q, w_q+2*g_q);
+    wire(curCell, aux2, cursor, "d", arm_len_y+g_q-structure_length, w_q);
+//add horizontal strip
+    cursor.set(cursor.x()-arm_len_x/2-g_q, cursor.y()-arm_len_y/2);
+    wire(curCell, aux3, cursor, "r", arm_len_x+2*g_q, w_q+2*g_q);
+    cursor.set(cursor.x()+g_q, cursor.y());
+    wire(curCell, aux2, cursor, "r", arm_len_x, w_q);	
+
+// rotate for desired orientation
+    point pos = cursor;
+    rotateLayer(curCell, aux2, anchorPoint, angleFromDirection(direction));
+    rotateLayer(curCell, aux3, anchorPoint, angleFromDirection(direction));
+
+//subtract one from the other and get the desired structure
+    layout->booleanTool->boolOnLayer(aux2, aux2, M, "A+B", 0, 0, 0);
+    layout->booleanTool->boolOnLayer(aux3, aux3, protect, "A+B", 0, 0, 0);
+
+    clearAllAuxiliaryAux(curCell);
+// create a point for SQUID or JJ  location
+    point retPoint = newPoint(0, -arm_len_y-2*g_q);
+    point squidPoint = newPoint(retPoint.x(), retPoint.y()+structure_length/2 - squid_width_bottom/2);
+    retPoint = rotateVector(retPoint, anchorPoint, direction);
+    squidPoint = rotateVector(squidPoint, anchorPoint, direction);
+   if (JJ == 0){
+// add SQUID
+   addSquidMSTU(curCell, squidPoint, direction,arm_len_x,  w_JJ,  h_JJ,  corr,  asymmetry);
+   }
+   else{
+// add JJ
+   addJJMSTU(curCell, squidPoint, direction,arm_len_x,  w_JJ,  h_JJ,  corr);
+   }
+// add local marks
+   addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()-distance, retPoint.y()-distance));
+    addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()+distance, retPoint.y()-distance));
+    addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()+distance, retPoint.y()+distance));
+    addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()-distance, retPoint.y()+distance));
+    return retPoint;
+  }
+
+point addXmonSize(cell* curCell, point anchorPoint, string direction, doubleList arm_lens, int distance, int w_JJ_l, int h_JJ_l, int w_JJ_r, int h_JJ_r, int corr = 30, double asymmetry=0,bool JJ=0) {
+ //the size of the hole at the bottom of the structure for the squid of JJ
+  int structure_length = 8e3;// only even numbers are available for symmetrical view
+  int squid_width_bottom = 4e3;
+  
+   double arm_len_x = arm_lens.at(0);
+   double arm_len_y = arm_lens.at(1);
+   point cursor;
+
+	
+	
+//add vertical strip
+    cursor.set(anchorPoint.x(), anchorPoint.y()-g_q);
+    wire(curCell, aux3, anchorPoint, "d", arm_len_y+2*g_q, w_q+2*g_q);
+    wire(curCell, aux2, cursor, "d", arm_len_y+g_q-structure_length, w_q);
+//add horizontal strip
+    cursor.set(cursor.x()-arm_len_x/2-g_q, cursor.y()-arm_len_y/2);
+    wire(curCell, aux3, cursor, "r", arm_len_x+2*g_q, w_q+2*g_q);
+    cursor.set(cursor.x()+g_q, cursor.y());
+    wire(curCell, aux2, cursor, "r", arm_len_x, w_q);	
+
+// rotate for desired orientation
+    point pos = cursor;
+    rotateLayer(curCell, aux2, anchorPoint, angleFromDirection(direction));
+    rotateLayer(curCell, aux3, anchorPoint, angleFromDirection(direction));
+
+//subtract one from the other and get the desired structure
+    layout->booleanTool->boolOnLayer(aux2, aux2, M, "A+B", 0, 0, 0);
+    layout->booleanTool->boolOnLayer(aux3, aux3, protect, "A+B", 0, 0, 0);
+
+    clearAllAuxiliaryAux(curCell);
+// create a point for SQUID or JJ  location
+    point retPoint = newPoint(0, -arm_len_y-2*g_q);
+    point squidPoint = newPoint(retPoint.x(), retPoint.y()+structure_length/2 - squid_width_bottom/2);
+    retPoint = rotateVector(retPoint, anchorPoint, direction);
+    squidPoint = rotateVector(squidPoint, anchorPoint, direction);
+   if (JJ == 0){
+// add SQUID
+   addSquidMSTUSize(curCell, squidPoint, direction,arm_len_x,  w_JJ_l,  h_JJ_l, w_JJ_r, h_JJ_r,  corr, 0);
+   }
+   else{
+// add JJ
+   addJJMSTU(curCell, squidPoint, direction,arm_len_x,  w_JJ,  h_JJ,  corr);
+   }
+// add local marks
+   addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()-distance, retPoint.y()-distance));
+    addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()+distance, retPoint.y()-distance));
+    addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()+distance, retPoint.y()+distance));
+    addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()-distance, retPoint.y()+distance));
+    return retPoint;
+  }
+point addTestSquid(cell* curCell, point anchorPoint, string direction, int w_JJ, int h_JJ, int corr = 30, double asymmetry=0,bool JJ=0) {
+
+ //the size of the hole at the bottom of the structure for the squid of JJ
+  int structure_length = 8e3;// only even numbers are available for symmetrical view
+  int squid_width_bottom = 4e3;
+  int box_size=200e3;
+  point cursor;
+  int g_box=10e3;
+  int arm_len_x=0;
+	
+//add vertical strip
+    cursor.set(anchorPoint.x(), anchorPoint.y()-g_box-box_size);
+    wire(curCell, aux3, cursor, "u", structure_length+2*g_box+2*box_size, 2*g_box+box_size);
+    cursor.set(anchorPoint.x(), anchorPoint.y());
+    wire(curCell, aux2, cursor, "d", box_size, box_size);
+    cursor.set(anchorPoint.x(), anchorPoint.y()+box_size+structure_length);
+    wire(curCell, aux2, cursor, "d", box_size, box_size);
+
+// rotate for desired orientation
+    point pos = cursor;
+    rotateLayer(curCell, aux2, anchorPoint, angleFromDirection(direction));
+    rotateLayer(curCell, aux3, anchorPoint, angleFromDirection(direction));
+
+//subtract one from the other and get the desired structure
+    layout->booleanTool->boolOnLayer(aux2, aux2, M, "A+B", 0, 0, 0);
+    layout->booleanTool->boolOnLayer(aux3, aux3, protect, "A+B", 0, 0, 0);
+
+    clearAllAuxiliaryAux(curCell);
+// create a point for SQUID or JJ  location
+    point retPoint = newPoint(0,0);
+    point squidPoint = newPoint(retPoint.x(), retPoint.y()+structure_length/2 - squid_width_bottom/2);
+    retPoint = rotateVector(retPoint, anchorPoint, direction);
+    squidPoint = rotateVector(squidPoint, anchorPoint, direction);
+   if (JJ == 0){
+// add SQUID
+   addSquidMSTU(curCell, squidPoint, direction,arm_len_x,  w_JJ,  h_JJ,  corr,  asymmetry);
+   }
+   else{
+// add JJ
+   addJJMSTU(curCell, squidPoint, direction,arm_len_x,  w_JJ,  h_JJ,  corr);
+   }
+// add local marks
+     int distance = 200e3;
+  addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()-distance, retPoint.y()-distance));
+    addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()+distance, retPoint.y()-distance));
+    addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()+distance, retPoint.y()+distance));
+    addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()-distance, retPoint.y()+distance));
+    return retPoint;
+}
+point addTestSquidSize(cell* curCell, point anchorPoint, string direction, int w_JJ_l, int h_JJ_l,int w_JJ_r, int h_JJ_r, int corr = 0, double asymmetry=0,bool JJ=0) {
+
+ //the size of the hole at the bottom of the structure for the squid of JJ
+  int structure_length = 8e3;// only even numbers are available for symmetrical view
+  int squid_width_bottom = 4e3;
+  int box_size=200e3;
+  point cursor;
+  int g_box=10e3;
+  int arm_len_x=0;
+	
+//add vertical strip
+    cursor.set(anchorPoint.x(), anchorPoint.y()-g_box-box_size);
+    wire(curCell, aux3, cursor, "u", structure_length+2*g_box+2*box_size, 2*g_box+box_size);
+    cursor.set(anchorPoint.x(), anchorPoint.y());
+    wire(curCell, aux2, cursor, "d", box_size, box_size);
+    cursor.set(anchorPoint.x(), anchorPoint.y()+box_size+structure_length);
+    wire(curCell, aux2, cursor, "d", box_size, box_size);
+
+// rotate for desired orientation
+    point pos = cursor;
+    rotateLayer(curCell, aux2, anchorPoint, angleFromDirection(direction));
+    rotateLayer(curCell, aux3, anchorPoint, angleFromDirection(direction));
+
+//subtract one from the other and get the desired structure
+    layout->booleanTool->boolOnLayer(aux2, aux2, M, "A+B", 0, 0, 0);
+    layout->booleanTool->boolOnLayer(aux3, aux3, protect, "A+B", 0, 0, 0);
+
+    clearAllAuxiliaryAux(curCell);
+// create a point for SQUID or JJ  location
+    point retPoint = newPoint(0,0);
+    point squidPoint = newPoint(retPoint.x(), retPoint.y()+structure_length/2 - squid_width_bottom/2);
+    retPoint = rotateVector(retPoint, anchorPoint, direction);
+    squidPoint = rotateVector(squidPoint, anchorPoint, direction);
+   if (JJ == 0){
+// add SQUID
+   addSquidMSTUSize(curCell, squidPoint, direction,arm_len_x,  w_JJ_l,  h_JJ_l,w_JJ_r,  h_JJ_r,  corr,  asymmetry);
+   }
+   else{
+// add JJ
+   addJJMSTU(curCell, squidPoint, direction,arm_len_x,  w_JJ,  h_JJ,  corr);
+   }
+// add local marks
+     int distance = 200e3;
+  addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()-distance, retPoint.y()-distance));
+    addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()+distance, retPoint.y()-distance));
+    addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()+distance, retPoint.y()+distance));
+    addLocalAlignmentMarkBMSTU(curCell, newPoint(retPoint.x()-distance, retPoint.y()+distance));
+    return retPoint;
+}

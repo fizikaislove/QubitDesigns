@@ -1,0 +1,256 @@
+#!/usr/bin/layout
+#name=XMon resonators
+#help=Creates XMon resonator design
+
+#include "../lib/wiring.layout"
+#include "../lib/auxx.layout"
+#include "../lib/layersSetup.layout"
+#include "../lib/resonator.layout"
+#include "../lib/feedline.layout"
+#include "../lib/claw.layout"
+#include "../lib/Xmon_man.layout"
+#include "../lib/Squid.layout"
+#include "../lib/alignment_mark.layout"
+#include "../lib/holes_MSTU.layout"
+//#include "../lib/holes_SIM.layout"
+//#include "../lib/holes_MISIS.layout"
+
+        int M = 0;
+        int M1 = 1;
+        int protect = 2;
+        int ground = 3;
+        int mask = 4;
+        int total = 5;
+        int aux = 6;
+        int aux2 = 7;
+        int aux3 = 8;
+        int aux4 = 9;
+	int aux5 = 30; 
+        int bandage = 10;
+	int error =11;
+	int holes=12;
+	int jj_layer=13;
+        
+        int chip_height = 5e6;
+        int chip_width = 5e6;
+        int border=50e3;
+        
+        int feedlineDepth = chip_height/4;
+        double  ɛ= 11.45;
+        double c = 299792458.0;
+
+        doubleList res_freqs;        
+        doubleList test_res_freqs;
+	intList res_claw;
+	intList res_claw_strip;
+	intList res_claw_qubit;
+	intList coupler_claw;
+	intList coupler_claw_strip;
+	intList coupler_claw_qubit;
+        
+        int w_res =7e3;
+        int g_res = 4e3;
+	int add_y=100e3;
+        int x = 4e3;//????? ????? ?????????? ?????? ? ???????????
+        int tailLen =650e3;
+	int tailLen_coupler=680e3;
+        int w_thinGround = 5e3;
+        int L_claw = 90e3;
+        int w_claw = 20e3;
+        int w_z1=4e3;
+	int g_z1=3e3;
+	int w_z2=10e3;
+	int g_z2=6e3;
+        int w_feed = 14e3;
+        int g_feed = 8e3;
+        int w_q = 16e3;
+        int g_q = 16e3;
+        double arm_len_x = 300e3;
+	double arm_len_y = 300e3;
+	double arm_len_coupler_x = 400e3;
+	double arm_len_coupler_y= 120e3;
+	doubleList arm_len;
+	doubleList arm_len_coupler;  
+	
+        doubleList asymmetries;
+	int w_claw_coupler=5e3;
+	int L_claw_coupler=140e3;
+
+double new_freq(double w0){
+    double w,c,e_eff,Z,C,l,w;
+    w0=w0*1e9*2*math::pi;
+    c=299792458;
+    e_eff=(11.45+1)/2;
+    Z=56.3;//меняй тут
+    C=47.6e-15;//и тут емкость клешни
+    l=math::pi*c/math::sqrt(e_eff)/(2*w0);
+    w=w0/(1-2*Z*C*w0/(math::pi));
+    //layout->getText("Cursor_x ","X, mcm:",w/1e9/(2*math::pi));
+    return w/1e9/(2*math::pi);
+ }
+  
+string sample_name = "sample";
+int main() {
+    setupLayers();
+    layout->drawing->selectAll();
+    layout->drawing->deleteSelect();
+    layout->drawing->deselectAll();
+
+        
+    
+    int i;
+    cell* curCell;
+    layout->drawing->newCell();
+    
+    layout->drawing->currentCell->cellName=sample_name;
+    curCell = layout->drawing->currentCell;
+  
+    
+   
+    point cursor;
+    // add transmision line
+    intList segmentLengths;
+    stringList directions;
+    directions.append("l");directions.append("d"); directions.append("l");
+    segmentLengths.append(2500e3+50e3-100e3);segmentLengths.append(500e3);segmentLengths.append(1100e3+100e3);
+    cursor.set(-(chip_width/2-3500e3-150e3), 500e3);
+    addFeedline(curCell, cursor, w_feed, g_feed, segmentLengths, directions, "md");
+    
+   
+   
+   
+    // Ground plane
+    curCell->addBox(-(chip_width-0.2e6)/2, -(chip_height-0.2e6)/2, chip_width-0.2e6, chip_height-0.2e6, ground);
+    
+    int resonatorPositionsX = -chip_width/6;
+    int resonatorPositionsY = -chip_height/4+feedlineDepth-w_feed/2-g_feed-x+400e3+add_y;
+    res_freqs.append(new_freq(7.2)); res_freqs.append(new_freq(8)); res_freqs.append(new_freq(7.4));
+    
+    point cursor2;
+    point cursor3;
+    point cursor4;
+    point cursor5;
+    point cursor6;
+    stringList directions; 
+    intList segmentLengths; 
+    arm_len.append(arm_len_x);arm_len.append(arm_len_y);
+    arm_len_coupler.append(arm_len_coupler_x);arm_len_coupler.append(arm_len_coupler_y);
+
+
+
+     res_claw.append(L_claw);res_claw.append(w_claw);
+     res_claw_strip.append(w_thinGround);res_claw_strip.append(w_res);
+     res_claw_qubit.append(w_q);res_claw_qubit.append(g_q);
+
+     coupler_claw.append(L_claw_coupler);coupler_claw.append(w_claw_coupler);
+     coupler_claw_strip.append(w_thinGround);coupler_claw_strip.append(w_q);
+     coupler_claw_qubit.append(w_q);coupler_claw_qubit.append(g_q);
+////////////////////////////////////////////////////////////////?????? ?????
+         cursor.set(resonatorPositionsX+400e3-5e3, resonatorPositionsY);
+        cursor2 = addResonator(curCell, cursor, w_res, g_res, res_freqs.at(0), tailLen, "d",0,350e3,300e3);
+       cursor2 = addClaw(curCell, cursor2, "d",res_claw,res_claw_strip,res_claw_qubit);
+
+        cursor2 = addXmon(curCell, cursor2, "d", arm_len,100e3,84, 100,0, 0,1);//add JJ
+
+        
+
+//////??????? XY       
+	cursor4.set(cursor2.x()-300e3, cursor2.y()+100e3+40e3);
+	stringList directions; 
+         directions.append("l"); directions.append("d"); 
+	intList segmentLengths; 
+        
+        segmentLengths.append(600e3+390e3-250e3); segmentLengths.append(2200e3-107e3); 
+        addFeedline(curCell, cursor4,w_z1+1e3,g_z1 , segmentLengths, directions, "md",w_res,g_res,200e3);
+	
+
+/////////////////////////////////////////////////////////////////////////?????? ?????
+	cursor.set(resonatorPositionsX+800e3-10e3, resonatorPositionsY);
+        cursor2 = addResonator(curCell, cursor, w_res, g_res, res_freqs.at(1), tailLen_coupler, "d",0,250e3,120e3);
+	cursor2 = addClaw(curCell, cursor2, "d",res_claw,res_claw_strip,res_claw_qubit);
+	int striplen = 60e3;
+	cursor2.set(cursor2.x(),cursor2.y()-striplen-g_q);
+	cursor2=addStripe(curCell,protect,M,cursor2,"u",striplen,w_q,g_q,true);
+	cursor2.set(cursor2.x(),cursor2.y()-striplen+g_q);
+//// ??????? ????         
+	cursor2 = addXmonSize(curCell, cursor2, "d", arm_len_coupler,35e3 ,200, 158,200,99,0, 0,0);
+
+	
+//////??????? Z
+        stringList directions; 
+	directions.append("d"); directions.append("l"); directions.append("d");
+	intList segmentLengths; 
+        segmentLengths.append(320e3+75e3); segmentLengths.append( 200e3-23e3); 
+	segmentLengths.append(chip_height/2 + 123e3+cursor2.y()-190e3-2e3+25e3-300e3-460e3+500e3-16e3-75e3); 
+       	addFeedline(curCell, cursor2, w_z1, g_z1, segmentLengths, directions, "fb",w_z2,g_z2,200e3);
+
+
+	
+//?????? ?????
+	cursor5.set(cursor2.x()+arm_len_coupler_x/2,cursor2.y()+arm_len_coupler_y/2+g_q);
+	cursor5 = addClaw(curCell, cursor5, "r",coupler_claw,coupler_claw_strip,coupler_claw_qubit);
+
+	
+//????? ?????
+	cursor5.set(cursor2.x()-arm_len_coupler_x/2,cursor2.y()+arm_len_coupler_y/2+g_q);
+	cursor5 = addClaw(curCell, cursor5, "l",coupler_claw,coupler_claw_strip,coupler_claw_qubit);
+
+
+///////////////////////////////////////////////////////////////////////// ?????? ?????
+		cursor.set(resonatorPositionsX+800e3-10e3+800e3-5e3+42e3, resonatorPositionsY);
+	cursor2 = addResonatorMirror(curCell, cursor, w_res, g_res, res_freqs.at(2), tailLen, "d",0,350e3,250e3);
+	cursor2 = addClaw(curCell, cursor2, "d",res_claw,res_claw_strip,res_claw_qubit);
+
+//// ??????? ????         
+	cursor2 = addXmon(curCell, cursor2, "d", arm_len,100e3, 90, 100,0, 0,1);
+
+
+
+
+//////??????? X
+        stringList directions; 
+	 directions.append("r"); directions.append("u");directions.append("r");
+	intList segmentLengths; 
+        segmentLengths.append(260e3+30e3);
+	segmentLengths.append(chip_height/5-100e3-350e3-143e3); 
+	segmentLengths.append(1450e3-101e3); 
+	cursor4.set(cursor2.x()+300e3, cursor2.y()+140e3);
+        addFeedline(curCell, cursor4,w_z1+1e3,g_z1 , segmentLengths, directions, "md",w_res,g_res,200e3);	
+
+
+
+///////////////////////////////////////////////////////////// test SQUID
+        addTestSquid(curCell, newPoint(-chip_width/2+1.5e6-300e3, chip_height/2-0.5e6), "d",84, 100,0,0,1);
+        addTestSquid(curCell, newPoint(-chip_width/2+1.5e6+500e3, chip_height/2-0.5e6), "d",90, 100,0,0,1);
+        addTestSquidSize(curCell, newPoint(-chip_width/2+1.5e6+1300e3, chip_height/2-0.5e6), "d",200, 158,200,99,0,0,0);
+	curCell->addBox(-chip_width/2+1.5e6+1300e3+800e3-10e3,chip_height/2-1e6-10e3,420e3,420e3,protect);
+	curCell->addBox(-chip_width/2+1.5e6+1300e3+800e3,chip_height/2-1e6,400e3,400e3,M);
+///////////////////////////////////////////////////////////// HOLES
+	addHoles(curCell); 
+
+	    
+
+
+//??????? ????????? ??? ???????? ?????????
+ layout->booleanTool->boolOnLayer( protect,M, total, "A-B", 0, 0, 0);
+    curCell->addBox(-(chip_width-0.2e6)/2-border, -(chip_height-0.2e6)/2-border, chip_width-0.2e6+border*2, chip_height-0.2e6+border*2, aux);
+    layout->booleanTool->boolOnLayer(aux, ground, total, "A-B", 0, 0, 0);
+   clearLayer(curCell, aux);
+//??????????????? ????????? ??? ????? ? ?????????????
+/*
+   layout->booleanTool->boolOnLayer(ground, protect, mask, "A-B", 0, 0, 0);
+   layout->booleanTool->boolOnLayer(M, mask, total, "A+B", 0, 0, 0);
+  */
+
+    layout->backgroundTool->clearBackground();
+
+    
+    clearLayer(curCell, mask);
+    clearLayer(curCell, M);
+    clearLayer(curCell, protect);
+    clearLayer(curCell, ground);
+    clearLayer(curCell, 18);
+
+
+    
+}

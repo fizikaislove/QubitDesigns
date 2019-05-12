@@ -1,0 +1,41 @@
+
+// Draws a layer of square holes which is within 10 um inside the ground polygon..
+
+     double hole_size = 4e3;
+     double hole_period = 6e3;
+     double border_thickness = 500e3;
+
+void addHoles(cell* curCell) {
+
+    double N_holes_vertical = math::floor((chip_height-2*border_thickness)/hole_period)+1;
+    double N_holes_horizontal = math::floor((chip_width-2*border_thickness)/hole_period)+1; 
+
+    for (int i = -N_holes_vertical/2; i<=N_holes_vertical/2; i++) {
+        for (int j = -N_holes_horizontal/2; j<N_holes_horizontal/2+1; j++) {
+            point center = newPoint(j * (chip_width-2*border_thickness)/N_holes_horizontal,  i *(chip_height-2*border_thickness)/N_holes_vertical);
+            for(int z=-hole_period/hole_size;z<=hole_period/hole_size;z++){
+                 if(z!=0){
+	         curCell->addBox(center.x()-hole_size/2*(1+2*z), center.y()-hole_size/2, hole_size, hole_size,aux2);
+                 }
+		curCell->addBox(center.x()-hole_size/2, center.y()-hole_size/2*(1+2*z), hole_size, hole_size,aux3);
+
+             }
+        }
+    }
+
+    layout->drawing->activeLayer=error;
+    layout->drcTool->setErrorLayerToActiveLayer();
+    layout->booleanTool->boolOnLayer(ground, protect, aux4, "A-B", 0, 0, 0); //aux4 is mask
+    layout->drcTool->inside(20e3, aux2, aux4);
+    layout->booleanTool->boolOnLayer(aux2, error, holes, "A-B", 0, 0, 0);
+    layout->booleanTool->boolOnLayer(error, error, error, "A-B", 0, 0, 0);
+    layout->drcTool->inside(20e3, aux3, aux4);
+    layout->booleanTool->boolOnLayer(aux3, error, holes+1, "A-B", 0, 0, 0);
+    
+    string curCellName = curCell->cellName;
+    layout->drawing->setCell(curCellName+":DRC-Rule");
+    layout->drawing->deleteCurrentCell();
+    layout->drawing->setCell(curCellName);
+    clearAllAuxiliaryAux(curCell);
+
+}
